@@ -164,6 +164,45 @@ void combined_task(server interface pong_if i_pong)
 
 
 // 可分离函数 Distributable functions
+一个task 满足以下特点时可以被认为是可分离函数：
+(1) 首先满足可组合task的特点。
+（2）在其select 语句中，只需要对interface transactions 做出反应，即只需要对其它任务的连接进行反应。
+
+如下所示为一个可分离task的例子：
+
+[[Distributable]]
+void port_wiggler(server interface wiggle_if i, port p)
+{
+    while (1) {
+        select {
+            case i.wiggle(int n) :
+                printstrln("Wiggling port .");
+                for (int j = 0; j < n; j++) {
+                    p <: 1;
+                    p <: 0;
+                }
+                break;
+            case i.finish() :
+                return ;
+        }
+    }
+}
+
+如果一个可分离task和它所connect的task在同一个tile上面，那么该可分离task就会非常高效。在这种情况下面，编译器不会
+对可分离函数单独分配一个逻辑核。
+
+示例代码如下：
+
+int main() 
+{
+    interface wiggle_if i;
+    par {
+        on tile[0] : task1(i);
+        on tile[0] : port_wiggler(i, p);
+    }
+
+    return 0;
+}
 
 
 
