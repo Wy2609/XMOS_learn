@@ -71,4 +71,100 @@ void counter_task(const char *taskId) {
     }
 }
  
+ 组合函数的运行机制如下：
+
+// task1 代码段：
+
+init1 
+while (1) {
+    select {
+        case A :
+            ...
+        case B :
+            ...
+    }
+}
+
+
+// task2代码段
+
+init2 
+while (1) {
+    select {
+        case C :
+            ...
+        case D :
+            ...
+    }
+}
+
+两个代码段在一个逻辑核上组合运行之后，效果如下：
+
+"combinable task"
+init1
+init2
+
+while (1) {
+    select {
+        case A :
+            ...
+        case B :
+            ...
+        case C :
+            ...
+        case D :
+            ...
+    }
+}
+
+组合函数需要在main 函数中运行：
+示例代码如下：
+
+int main() 
+{
+    par {
+        on tile[0].core[0]: counter_task("task1");
+        on tile[0].core[0]: counter_task("task2);
+    }
+    return 0;
+}
+
+如果将非组合函数按照上述语法使用，编译器会报错。
+
+可以将 par 语句标记为 组合任务 ，这可以在任何函数内部实现。
+
+void f() {
+    [[combinable]]
+    par {
+        counter_task("task1");
+        counter_task("task2");
+    }
+}
+
+
+可以由小型的组合函数合并为一个大的组合函数。
+
+[[combinable]]
+void task1(server interface ping_if i);
+
+[[combinable]]
+void task2(server interface pong_if i_pong,
+            client interface ping_if i_ping);
+
+[[combinable]]
+void combined_task(server interface pong_if i_pong)
+{
+    interface ping_if i_ping;
+    [[combine]]
+    par {
+        task1(i_ping);
+        task2(i_pong, i_ping);
+    }
+}
+
+
+// 可分离函数 Distributable functions
+
+
+
 
