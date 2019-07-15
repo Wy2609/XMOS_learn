@@ -1,0 +1,74 @@
+// The parallelism and task placement
+
+在Xc语言中，task 可以认为和Linux系统中的线程是一样的概念。每个task都可以独立运行。定义task的方式和C语言中定义
+函数的方式一样，一般的习惯是将task的返回值设置为 void 并在task内部有一个死循环。一般的task形式如下：
+
+void task1(args) {
+    while (1) {
+        // some code here ...
+    }
+}
+
+task 在逻辑核上的分配有以下特点：
+（1） 多个task可以运行在同一个逻辑核上面。
+（2）有的task可以在多个逻辑核上面运行。
+（3) task placement 只发生在 main 函数中。
+
+实现 task placement 的语法如下：
+
+#include　<platform.h>
+
+int main() 
+{
+    par {
+        on tile[0]: task1();
+        on tile[1].core[0] : task2();
+        on tile[1].core[0] : task3(); 
+    }
+}
+
+在上述代码中，task2 和 task3 被放置在同一个逻辑核中，只有task满足一定的条件时，才能允许这样做。task需要满足的
+条件是：
+
+task 必须是 combinable functions， 即可组合函数。可组合函数的定义为：
+
+如果一个task 以死循环结束，且死循环的内部有一个 select 语句结构，这样的函数可以连续地对事件做出反应。具体结构如下：
+
+void task1(args) {
+    // some code here 
+
+    while (1) {
+        select {
+            case ... :
+                break;
+            case ...:
+                break;
+            ...
+        }
+    }
+}
+
+对于上述函数结构形式，需要在其函数前部加上，可组合函数特性。具体如下：
+
+(1) 可组合函数必须返回 void 值。
+(2) 函数的最后一个语句必须是 while (1) ， 且while语句中必须包含有 select 语句。
+
+[[combinable]]
+void counter_task(const char *taskId) {
+    int count = 0;
+    timer tmr ;
+    unsigned time;
+    tmr :> time;
+
+    while (1) {
+        select {
+            case tmr when tmerafter(time) :> int now;
+            printf("Counter tick at time %X on task %s\n", now , taskId );
+            count++;
+            time += 10000;
+            break;
+        }
+    }
+}
+ 
+
