@@ -43,11 +43,27 @@ void time_select()
         }
     }
 
+}
 
+void print_trigger_time()
+{
+    timer t;
+    unsigned time;
+    unsigned period = 50000;
+    unsigned n = 0;
+    t :> time;
+    while (1) {
+        select {
+            case t when timerafter(time) :> n:
+                printf("Timer ticks is: %d.\n", n);
+                time += period;
+                break;
+        }
+    }
 }
 
 int main()
 {
-    time_select();
+    print_trigger_time();
     return 0;
 }
