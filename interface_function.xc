@@ -28,13 +28,44 @@ void task2(server interface my_interface i) {
     }
 }
 
+interface my_interface_2 {
+    void f(int a[], int len);
+};
+
+void task3(client interface my_interface_2 i) {
+    int a[5] = {0, 1, 2, 3, 4};
+    i.f(a, 5);
+}
+
+void task4(server interface my_interface_2 i) {
+    select {
+        case i.f(int a[], int len) :
+            for (int i = 0; i < len; i++)
+                printf("%d ", a[i]);
+            break;
+    }
+}
+
+
+
+
+
+
 int main()
 {
     interface my_interface i;
+    interface my_interface_2 i2;
     par {
         task1(i);
         task2(i);
     }
+
+    par {
+        task3(i2);
+        task4(i2);
+    }
+
+
     return 0;
 }
 
