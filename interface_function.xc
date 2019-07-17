@@ -6,6 +6,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 
 interface my_interface {
     int get_value(int c_to_s);
@@ -47,7 +48,34 @@ void task4(server interface my_interface_2 i) {
 }
 
 
+interface my_interface_3 {
+    int send_and_rec(int x);
+    void fill_buffer(int buf[n], unsigned n);
+};
 
+void task5(client interface my_interface_3 i) {
+    int re = i.send_and_rec(30);
+    int a[5];
+    printf("\nThe sever send to client %d.\n", re);
+    i.fill_buffer(a, 5);
+    printf("The server fill buffer with: %d\n", a[1]);
+
+}
+
+void task6(server interface my_interface_3 i) {
+    int data[5] = {100, 200, 400, 600, 800};
+    while (1) {
+    select {
+        case i.send_and_rec(int x) -> int ret:
+               ret = 10000;
+               printf("The client send %d to server.\n", x);
+               break;
+        case i.fill_buffer(int a[n], unsigned n):
+                memcpy(a, data, n*sizeof(int));
+                break;
+    }
+    }
+}
 
 
 
@@ -55,6 +83,7 @@ int main()
 {
     interface my_interface i;
     interface my_interface_2 i2;
+    interface my_interface_3 i3;
     par {
         task1(i);
         task2(i);
@@ -65,6 +94,10 @@ int main()
         task4(i2);
     }
 
+    par {
+        task5(i3);
+        task6(i3);
+    }
 
     return 0;
 }
